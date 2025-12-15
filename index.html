@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>輪休表生成器</title>
+    <meta
+      name="description"
+      content="自動生成新月份的輪休表，支援 Excel 範本匯入與規則設定"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="app-container">
+      <!-- Header -->
+      <header class="app-header">
+        <div class="logo">
+          <span class="logo-icon">📅</span>
+          <h1>輪休表生成器</h1>
+        </div>
+        <p class="subtitle">自動生成新月份的輪休表</p>
+      </header>
+
+      <!-- Progress Steps -->
+      <nav class="progress-nav">
+        <div class="step active" data-step="1">
+          <div class="step-number">1</div>
+          <span class="step-label">上傳檔案</span>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step" data-step="2">
+          <div class="step-number">2</div>
+          <span class="step-label">參數設定</span>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step" data-step="3">
+          <div class="step-number">3</div>
+          <span class="step-label">場域設定</span>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step" data-step="4">
+          <div class="step-number">4</div>
+          <span class="step-label">生成下載</span>
+        </div>
+      </nav>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <!-- Step 1: File Upload -->
+        <section class="step-content active" id="step1">
+          <div class="card">
+            <h2 class="card-title">
+              <span class="icon">📂</span>
+              上傳檔案
+            </h2>
+
+            <div class="upload-section">
+              <div class="upload-box" id="templateUpload">
+                <div class="upload-icon">📊</div>
+                <h3>上傳範本 (Excel)</h3>
+                <p>上傳既有的輪休表範本</p>
+                <input
+                  type="file"
+                  id="templateFile"
+                  accept=".xlsx,.xls"
+                  hidden
+                />
+                <button
+                  class="btn btn-primary upload-btn"
+                  onclick="document.getElementById('templateFile').click()"
+                >
+                  選擇檔案
+                </button>
+                <div class="file-name" id="templateFileName"></div>
+              </div>
+
+              <div class="upload-box" id="rulesUpload">
+                <div class="upload-icon">📋</div>
+                <h3>上傳規則 (CSV)</h3>
+
+                <p>上傳行事曆與休假規定表</p>
+                <input type="file" id="rulesFile" accept=".csv" hidden />
+                <button
+                  class="btn btn-primary upload-btn"
+                  onclick="document.getElementById('rulesFile').click()"
+                >
+                  選擇檔案
+                </button>
+                <div class="file-name" id="rulesFileName"></div>
+                <p style="margin-top: 12px; font-size: 0.9rem; color: #666">
+                  <a
+                    href="https://thunderbit.com/zh-Hant/tool/image-to-excel-converter"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style="
+                      color: #4caf50;
+                      text-decoration: none;
+                      border-bottom: 1px dotted #4caf50;
+                    "
+                  >
+                    🔗 圖片轉 CSV 工具
+                  </a>
+                </p>
+              </div>
+            </div>
+
+            <!-- Rules Preview -->
+            <div class="rules-preview hidden" id="rulesPreview">
+              <h3>📌 規則預覽</h3>
+              <div class="rules-table-container">
+                <table class="rules-table" id="rulesTable"></table>
+              </div>
+            </div>
+          </div>
+
+          <div class="nav-buttons">
+            <button class="btn btn-secondary" disabled>上一步</button>
+            <button class="btn btn-primary" id="step1Next" disabled>
+              下一步
+            </button>
+          </div>
+        </section>
+
+        <!-- Step 2: Parameter Settings -->
+        <section class="step-content" id="step2">
+          <div class="card">
+            <h2 class="card-title">
+              <span class="icon">⚙️</span>
+              參數設定
+            </h2>
+
+            <div class="form-group">
+              <label for="targetYear">目標年份</label>
+              <select id="targetYear" class="form-control"></select>
+            </div>
+
+            <div class="form-group">
+              <label for="targetMonth">目標月份</label>
+              <select id="targetMonth" class="form-control">
+                <option value="1">1 月</option>
+                <option value="2">2 月</option>
+                <option value="3">3 月</option>
+                <option value="4">4 月</option>
+                <option value="5">5 月</option>
+                <option value="6">6 月</option>
+                <option value="7">7 月</option>
+                <option value="8">8 月</option>
+                <option value="9">9 月</option>
+                <option value="10">10 月</option>
+                <option value="11">11 月</option>
+                <option value="12">12 月</option>
+              </select>
+            </div>
+
+            <!-- Month Info Display -->
+            <div class="month-info" id="monthInfo">
+              <div class="info-card">
+                <span class="info-label">可休總天數</span>
+                <span class="info-value" id="totalLeaveDays">-</span>
+              </div>
+              <div class="info-card">
+                <span class="info-label">備註說明</span>
+                <span class="info-value notes" id="monthNotes">-</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="nav-buttons">
+            <button class="btn btn-secondary" onclick="goToStep(1)">
+              上一步
+            </button>
+            <button class="btn btn-primary" onclick="goToStep(3)">
+              下一步
+            </button>
+          </div>
+        </section>
+
+        <!-- Step 3: Sheet Selection -->
+        <section class="step-content" id="step3">
+          <div class="card">
+            <h2 class="card-title">
+              <span class="icon">🏢</span>
+              場域設定
+            </h2>
+
+            <div class="sheet-selection">
+              <div class="select-all-container">
+                <label class="checkbox-wrapper">
+                  <input type="checkbox" id="selectAllSheets" />
+                  <span class="checkmark"></span>
+                  <span>全選場域</span>
+                </label>
+              </div>
+              <div class="sheets-grid" id="sheetsGrid"></div>
+            </div>
+
+            <!-- Selected Sheet Details -->
+            <div class="sheet-details hidden" id="sheetDetails">
+              <h3>📝 場域詳細設定</h3>
+              <div class="sheet-tabs" id="sheetTabs"></div>
+              <div class="sheet-forms" id="sheetForms"></div>
+            </div>
+          </div>
+
+          <div class="nav-buttons">
+            <button class="btn btn-secondary" onclick="goToStep(2)">
+              上一步
+            </button>
+            <button class="btn btn-primary" id="step3Next" disabled>
+              下一步
+            </button>
+          </div>
+        </section>
+
+        <!-- Step 4: Preview & Download -->
+        <section class="step-content" id="step4">
+          <div class="card">
+            <h2 class="card-title">
+              <span class="icon">✅</span>
+              確認與下載
+            </h2>
+
+            <div class="summary-section">
+              <h3>📋 設定摘要</h3>
+              <div class="summary-grid" id="summaryGrid"></div>
+            </div>
+
+            <div class="generate-section">
+              <button class="btn btn-large btn-success" id="generateBtn">
+                <span class="btn-icon">🚀</span>
+                生成輪休表
+              </button>
+              <div class="progress-container hidden" id="progressContainer">
+                <div class="progress-bar">
+                  <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <p class="progress-text" id="progressText">處理中...</p>
+              </div>
+            </div>
+
+            <div class="download-section hidden" id="downloadSection">
+              <div class="success-message">
+                <span class="success-icon">🎉</span>
+                <h3>生成完成！</h3>
+              </div>
+              <button class="btn btn-large btn-primary" id="downloadBtn">
+                <span class="btn-icon">📥</span>
+                下載 Excel 檔案
+              </button>
+            </div>
+          </div>
+
+          <div class="nav-buttons">
+            <button class="btn btn-secondary" onclick="goToStep(3)">
+              上一步
+            </button>
+            <button class="btn btn-secondary" onclick="resetApp()">
+              重新開始
+            </button>
+          </div>
+        </section>
+      </main>
+
+      <!-- Footer -->
+      <footer class="app-footer">
+        <p>© 2024 輪休表生成器 | Powered by ExcelJS</p>
+      </footer>
+    </div>
+
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
